@@ -1,0 +1,59 @@
+﻿stages:
+  - clone
+  - build
+  - unittest
+  - deploy
+
+variables:
+  DOTNET_VERSION: "8.0"
+  BUILD_CONFIGURATION: "Release"
+
+# ======================
+# Clone Stage
+# ======================
+clone_code:
+  stage: clone
+  image: alpine/git:latest
+  script:
+    - echo "Cloning repository..."
+    - git clone $CI_REPOSITORY_URL .
+  only:
+    - main
+
+# ======================
+# Build Stage
+# ======================
+build_project:
+  stage: build
+  image: mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION
+  script:
+    - echo "Restoring dependencies..."
+    - dotnet restore
+    - echo "Building project..."
+    - dotnet build --configuration $BUILD_CONFIGURATION
+  only:
+    - main
+
+# ======================
+# Unit Test Stage
+# ======================
+run_tests:
+  stage: unittest
+  image: mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION
+  script:
+    - echo "Running unit tests..."
+    - dotnet test --configuration $BUILD_CONFIGURATION --no-build --verbosity normal
+  only:
+    - main
+
+# ======================
+# Deploy Stage
+# ======================
+deploy_project:
+  stage: deploy
+  image: mcr.microsoft.com/dotnet/sdk:$DOTNET_VERSION
+  script:
+    - echo "Deploying application..."
+    - echo "Deployment step is a placeholder"
+  only:
+    - main
