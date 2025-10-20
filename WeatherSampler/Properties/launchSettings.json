@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "WeatherSampler": {
+      "commandName": "Project"
+    },
+    "Container (Dockerfile)": {
+      "commandName": "Docker"
+    }
+  }
+}

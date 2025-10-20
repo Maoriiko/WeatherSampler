@@ -1,0 +1,100 @@
+version: "3.8"
+name: weather-app
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: rabbitmq
+    hostname: rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    networks:
+      - weather-network
+
+  elasticsearch:
+    image: elasticsearch:9.1.5
+    container_name: elasticsearch
+    hostname: elasticsearch
+    environment:
+      - discovery.type=single-node
+      - ELASTIC_USERNAME=elastic
+      - ELASTIC_PASSWORD=changeme123
+      - xpack.security.enabled=true
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - esdata:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - weather-network
+
+  logstash:
+    image: docker.elastic.co/logstash/logstash:7.17.13
+    container_name: logstash
+    hostname: logstash
+    depends_on:
+      - rabbitmq
+      - elasticsearch
+    volumes:
+      - ./logstash/pipeline.conf:/usr/share/logstash/pipeline/logstash.conf:ro
+    networks:
+      - weather-network
+
+  grafana:
+    image: grafana/grafana-oss:9.4.0
+    container_name: grafana
+    hostname: grafana
+    depends_on:
+      - elasticsearch
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_AUTH_DISABLE_LOGIN_FORM=true
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+    volumes:
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/var/lib/grafana/dashboards
+    ports:
+      - "3000:3000"
+    networks:
+      - weather-network
+
+  weather-app:
+    image: ${DOCKER_REGISTRY-}weathersampler
+    build:
+      context: .
+      dockerfile: WeatherSampler/Dockerfile
+    container_name: weather-app
+    hostname: weather-app
+    depends_on:
+      - rabbitmq
+    environment:
+      - OpenWeather__ApiUrl=https://api.openweathermap.org/data/2.5/weather
+      - OpenWeather__ApiKey=6f021d52f3ff0872a534c69c1eebdeb3
+      - OpenWeather__City=Tel-Aviv
+      - RabbitMq__HostName=rabbitmq
+      - RabbitMq__UserName=guest
+      - RabbitMq__Password=guest
+      - Sampling__IntervalMinutes=1
+    restart: unless-stopped
+    networks:
+      - weather-network
+
+volumes:
+  esdata:
+  logstash:
+
+networks:
+    weather-network:
+        driver: bridge
+        ipam:
+          config:
+            - subnet: 172.20.0.0/16

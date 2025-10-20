@@ -1,0 +1,26 @@
+{
+  "annotations": { "list": [] },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Temperature",
+      "fieldConfig": { "defaults": {} },
+      "targets": [
+        {
+          "refId": "A",
+          "datasource": { "type": "elasticsearch", "uid": "" },
+          "query": "temperature",
+          "bucketAggs": [
+            { "type": "date_histogram", "field": "@timestamp", "id": "1", "settings": { "interval": "auto" } }
+          ],
+          "metrics": [
+            { "type": "avg", "field": "Temperature", "id": "1" }
+          ]
+        }
+      ]
+    }
+  ],
+  "title": "Weather Dashboard",
+  "schemaVersion": 36,
+  "version": 1
+}
