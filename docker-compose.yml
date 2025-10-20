@@ -83,7 +83,7 @@ services:
       - RabbitMq__HostName=rabbitmq
       - RabbitMq__UserName=guest
       - RabbitMq__Password=guest
-      - Sampling__IntervalMinutes=1
+      - Sampling__IntervalMinutes=60
     restart: unless-stopped
     networks:
       - weather-network
